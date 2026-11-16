@@ -35,17 +35,19 @@ function environmentFixedShipping() {
 export async function getStoreShippingSettings(): Promise<StoreShippingSettings> {
   const configuredFixedRate = environmentFixedShipping();
   let orderDeliveryColumnsAvailable = false;
-  try {
-    const columns = await getDb().$queryRaw<Array<{ available: boolean }>>`
-      SELECT COUNT(*) = 2 AS available
-      FROM pg_attribute
-      WHERE attrelid = to_regclass('public.orders')
-        AND attname IN ('shippingDeliveryMinDays', 'shippingDeliveryMaxDays')
-        AND NOT attisdropped
-    `;
-    orderDeliveryColumnsAvailable = columns[0]?.available === true;
-  } catch {
-    // Delivery estimates are optional; a metadata lookup failure must not block checkout.
+  if (process.env.DATABASE_URL) {
+    try {
+      const columns = await getDb().$queryRaw<Array<{ available: boolean }>>`
+        SELECT COUNT(*) = 2 AS available
+        FROM pg_attribute
+        WHERE attrelid = to_regclass('public.orders')
+          AND attname IN ('shippingDeliveryMinDays', 'shippingDeliveryMaxDays')
+          AND NOT attisdropped
+      `;
+      orderDeliveryColumnsAvailable = columns[0]?.available === true;
+    } catch {
+      // Delivery estimates are optional; a metadata lookup failure must not block checkout.
+    }
   }
   const fallback = {
     originPostalCode: getCorreiosSetupStatus().origin,
@@ -67,6 +69,7 @@ export async function getStoreShippingSettings(): Promise<StoreShippingSettings>
     updatedBy: null,
     updatedAt: null,
   };
+  if (!process.env.DATABASE_URL) return fallback;
   try {
     const stored = await getDb().shippingSettings.findUnique({ where: { id: "store" } });
     if (!stored) return {
