@@ -8,5 +8,10 @@ loadEnv();
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: { path: "prisma/migrations" },
-  datasource: { url: resolvePrismaDatasourceUrl(process.env) },
+  // Generating Prisma Client does not connect to the database. Keep a deploy
+  // preview buildable without production credentials; migration commands still
+  // require an explicitly configured database URL.
+  ...(process.argv.includes("generate") && !process.env.DATABASE_URL && !process.env.DIRECT_DATABASE_URL
+    ? {}
+    : { datasource: { url: resolvePrismaDatasourceUrl(process.env) } }),
 });
