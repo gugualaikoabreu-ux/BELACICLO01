@@ -113,6 +113,8 @@ export default function AccountPage() {
 
       if (result.error) {
         setMessage(authFailureMessage(result.error, mode));
+      } else if (mode === "register" && result.data.user?.identities?.length === 0) {
+        setMessage("Este e-mail já tem uma conta. Tente entrar ou use “Esqueci minha senha”.");
       } else if (mode === "login" || result.data.session) {
         window.location.reload();
       } else {
