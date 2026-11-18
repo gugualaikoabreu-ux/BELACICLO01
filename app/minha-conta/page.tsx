@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/app/minha-conta/auth-client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getAuthCallbackUrl } from "@/lib/supabase/auth-redirect";
 import { isStoreAdminEmail } from "@/lib/admin-identity";
 import { Icon } from "@/components/icons";
 
@@ -136,7 +137,7 @@ export default function AccountPage() {
         : await supabase.auth.signUp({
             email,
             password,
-            options: { data: { name }, emailRedirectTo: `${window.location.origin}/auth/callback` },
+            options: { data: { name }, emailRedirectTo: getAuthCallbackUrl() },
           });
 
       if (result.error) {
@@ -164,7 +165,7 @@ export default function AccountPage() {
       const { error } = await createSupabaseBrowserClient().auth.resend({
         type: "signup",
         email: resendEmail.trim(),
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        options: { emailRedirectTo: getAuthCallbackUrl() },
       });
       setResendMessage(error
         ? authFailureMessage(error, "register")

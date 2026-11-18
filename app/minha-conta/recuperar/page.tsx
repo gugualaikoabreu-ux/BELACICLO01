@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/app/minha-conta/auth-client";
+import { getAuthCallbackUrl } from "@/lib/supabase/auth-redirect";
 import { Icon } from "@/components/icons";
 
 export default function RecoverPage() {
@@ -10,7 +11,7 @@ export default function RecoverPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); const email = String(new FormData(event.currentTarget).get("email")).trim();
     try {
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/minha-conta/redefinir")}`;
+      const redirectTo = getAuthCallbackUrl("/minha-conta/redefinir");
       const { error } = await createSupabaseBrowserClient().auth.resetPasswordForEmail(email, { redirectTo });
       setMessage(error ? "Não foi possível enviar agora. Verifique a configuração de e-mail." : "Se o endereço estiver cadastrado, você receberá instruções para redefinir sua senha.");
     } catch { setMessage("Recuperação indisponível. Verifique a configuração do Supabase."); } finally { setBusy(false); }
