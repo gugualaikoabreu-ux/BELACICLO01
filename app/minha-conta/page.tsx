@@ -13,6 +13,45 @@ function displayName(user: User) {
   return typeof name === "string" && name.trim() ? name : user.email ?? "cliente";
 }
 
+function authFailureMessage(error: unknown, mode: "login" | "register") {
+  const details = error && typeof error === "object"
+    ? `${"code" in error ? String(error.code) : ""} ${"message" in error ? String(error.message) : ""}`
+    : String(error ?? "");
+  const normalized = details.toLowerCase();
+
+  if (/redirect.*(not allowed|allowlist)|url.*not allowed/.test(normalized)) {
+    return "Não foi possível configurar o link de confirmação. Avise o suporte da BelaCiclo para verificarmos o cadastro.";
+  }
+  if (/already registered|already exists|user_already_exists/.test(normalized)) {
+    return "Esse e-mail já pode ter uma conta. Tente entrar ou use “Esqueci minha senha”.";
+  }
+  if (/weak_password|password.*(short|weak)|password should/.test(normalized)) {
+    return "Escolha uma senha mais forte, com pelo menos 8 caracteres.";
+  }
+  if (/over_email_send_rate_limit|rate limit|too many requests/.test(normalized)) {
+    return "Muitas tentativas seguidas. Aguarde um pouco e tente novamente.";
+  }
+  if (/signup is disabled|signups not allowed|signup_disabled/.test(normalized)) {
+    return "O cadastro está temporariamente indisponível. Fale com a BelaCiclo.";
+  }
+  if (/email not confirmed|email_not_confirmed/.test(normalized)) {
+    return "Confirme seu e-mail pelo link enviado antes de entrar.";
+  }
+  if (/invalid login credentials|invalid_credentials/.test(normalized)) {
+    return "E-mail ou senha incorretos. Confira os dados ou use “Esqueci minha senha”.";
+  }
+  if (/invalid email|email.*invalid/.test(normalized)) {
+    return "Confira o formato do e-mail informado.";
+  }
+  if (/fetch|network|connection|timeout/.test(normalized)) {
+    return "Falha de conexão. Verifique sua internet e tente novamente.";
+  }
+
+  return mode === "register"
+    ? "Não foi possível criar a conta agora. Confira os dados e tente novamente. Se continuar, fale com a BelaCiclo."
+    : "Não foi possível entrar agora. Confira seus dados e tente novamente.";
+}
+
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [showAdminLink, setShowAdminLink] = useState(false);
@@ -49,21 +88,41 @@ export default function AccountPage() {
   }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setMessage("");
-    if (!isSupabaseConfigured) { setMessage("O cadastro ainda não está conectado ao Supabase."); setBusy(false); return; }
-    const form = new FormData(event.currentTarget);
-    const email = String(form.get("email")).trim();
-    const password = String(form.get("password"));
-    const name = String(form.get("name") ?? "").trim();
-    const supabase = createSupabaseBrowserClient();
-    const result = mode === "login"
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: `${window.location.origin}/auth/callback` } });
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
 
-    if (result.error) setMessage("Não foi possível concluir. Verifique os dados e tente novamente.");
-    else if (mode === "login") window.location.reload();
-    else setMessage("Cadastro iniciado. Confirme seu e-mail para ativar a conta.");
-    setBusy(false);
+    try {
+      if (!isSupabaseConfigured) {
+        setMessage("O cadastro ainda não está conectado ao Supabase.");
+        return;
+      }
+
+      const form = new FormData(event.currentTarget);
+      const email = String(form.get("email") ?? "").trim();
+      const password = String(form.get("password") ?? "");
+      const name = String(form.get("name") ?? "").trim();
+      const supabase = createSupabaseBrowserClient();
+      const result = mode === "login"
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { name }, emailRedirectTo: `${window.location.origin}/auth/callback` },
+          });
+
+      if (result.error) {
+        setMessage(authFailureMessage(result.error, mode));
+      } else if (mode === "login" || result.data.session) {
+        window.location.reload();
+      } else {
+        setMessage("Cadastro iniciado. Abra o link de confirmação enviado para seu e-mail para ativar a conta.");
+      }
+    } catch (error) {
+      setMessage(authFailureMessage(error, mode));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function signOut() {
