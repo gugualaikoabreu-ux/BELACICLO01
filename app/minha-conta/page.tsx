@@ -56,6 +56,14 @@ function authFailureMessage(error: unknown, mode: "login" | "register") {
     : "Não foi possível entrar agora. Confira seus dados e tente novamente.";
 }
 
+function isUnconfirmedEmailError(error: unknown) {
+  const details = error && typeof error === "object"
+    ? `${"code" in error ? String(error.code) : ""} ${"message" in error ? String(error.message) : ""}`
+    : String(error ?? "");
+
+  return /email not confirmed|email_not_confirmed/i.test(details);
+}
+
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [showAdminLink, setShowAdminLink] = useState(false);
@@ -79,6 +87,7 @@ export default function AccountPage() {
     } else if (authStatus === "confirmacao-url") {
       authMessageTimeout = setTimeout(() => {
         setMessage("O endereço de confirmação ainda não está permitido pelo serviço de login. A BelaCiclo precisa revisar a configuração do link.");
+        setCanResendConfirmation(true);
       }, 0);
     } else if (authStatus === "confirmacao-falhou" || authStatus === "link-invalido") {
       authMessageTimeout = setTimeout(() => {
@@ -142,11 +151,17 @@ export default function AccountPage() {
 
       if (result.error) {
         setMessage(authFailureMessage(result.error, mode));
+        if (mode === "login" && isUnconfirmedEmailError(result.error)) {
+          setResendEmail(email);
+          setCanResendConfirmation(true);
+        }
       } else if (mode === "register" && result.data.user?.identities?.length === 0) {
         setMessage("Este e-mail já tem uma conta. Tente entrar ou use “Esqueci minha senha”.");
       } else if (mode === "login" || result.data.session) {
         window.location.reload();
       } else {
+        setResendEmail(email);
+        setCanResendConfirmation(true);
         setMessage("Cadastro iniciado. Abra o link de confirmação enviado para seu e-mail para ativar a conta.");
       }
     } catch (error) {
@@ -184,5 +199,5 @@ export default function AccountPage() {
 
   if (isPending) return <section className="page-section"><p>Carregando conta…</p></section>;
   if (user) return <section className="page-section account-page"><div className="page-heading"><span className="eyebrow">ÁREA DO CLIENTE</span><h1>Olá, <em>{displayName(user)}.</em></h1><p>Que bom ter você por aqui.</p></div><div className="account-links">{showAdminLink && <Link href="/admin"><span>00</span><div><b>Painel da loja</b><small>Produtos, pedidos e configurações</small></div><Icon name="arrow"/></Link>}<Link href="/minha-conta/pedidos"><span>01</span><div><b>Meus pedidos</b><small>Histórico, status e rastreamento</small></div><Icon name="arrow"/></Link><Link href="/minha-conta/perfil"><span>02</span><div><b>Meus dados</b><small>Atualizar informações pessoais</small></div><Icon name="arrow"/></Link><Link href="/minha-conta/enderecos"><span>03</span><div><b>Meus endereços</b><small>Gerenciar dados de entrega</small></div><Icon name="arrow"/></Link><Link href="/favoritos"><span>04</span><div><b>Meus favoritos</b><small>Suas peças salvas</small></div><Icon name="arrow"/></Link><button onClick={signOut}><span>05</span><div><b>Sair da conta</b><small>Encerrar sessão</small></div><Icon name="arrow"/></button></div></section>;
-  return <section className="page-section auth-page"><div className="auth-panel"><span className="eyebrow">ÁREA DO CLIENTE</span><h1>{mode === "login" ? <>Que bom <em>ver você.</em></> : <>Um espaço <em>seu.</em></>}</h1><p>{mode === "login" ? "Entre para acompanhar seus pedidos e favoritos." : "Crie sua conta BelaCiclo."}</p><form onSubmit={submit} className="auth-form">{mode === "register" && <label>Nome completo<input name="name" autoComplete="name" required/></label>}<label>E-mail<input name="email" type="email" autoComplete="email" required/></label><label>Senha<input name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} required/></label>{mode === "login" && <Link href="/minha-conta/recuperar" className="text-link small-link">Esqueci minha senha</Link>}<button className="button button-dark full-button" disabled={busy}>{busy ? "Aguarde…" : mode === "login" ? "Entrar" : "Criar conta"}<Icon name="arrow"/></button><p className="form-feedback" aria-live="polite">{message}</p></form>{canResendConfirmation && <form onSubmit={resendConfirmation} className="auth-form"><label>Reenviar confirmação<input type="email" autoComplete="email" value={resendEmail} onChange={(event) => setResendEmail(event.target.value)} placeholder="Seu e-mail de cadastro" required/></label><button className="button button-outline full-button" disabled={resendBusy}>{resendBusy ? "Enviando…" : "Enviar novo link"}<Icon name="arrow"/></button><p className="form-feedback" aria-live="polite">{resendMessage}</p></form>}<button className="auth-switch" onClick={() => { setMode(mode === "login" ? "register" : "login"); setMessage(""); }}>{mode === "login" ? "Ainda não tem conta? Cadastre-se" : "Já tem conta? Entrar"}</button><p className="auth-note">{isSupabaseConfigured ? "Sua conta é protegida pela autenticação do Supabase." : "O cadastro ficará disponível depois de configurar as chaves do Supabase."}</p></div></section>;
+  return <section className="page-section auth-page"><div className="auth-panel"><span className="eyebrow">ÁREA DO CLIENTE</span><h1>{mode === "login" ? <>Que bom <em>ver você.</em></> : <>Um espaço <em>seu.</em></>}</h1><p>{mode === "login" ? "Entre para acompanhar seus pedidos e favoritos." : "Crie sua conta BelaCiclo."}</p><form onSubmit={submit} className="auth-form">{mode === "register" && <label>Nome completo<input name="name" autoComplete="name" required/></label>}<label>E-mail<input name="email" type="email" autoComplete="email" required/></label><label>Senha<input name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} required/></label>{mode === "login" && <Link href="/minha-conta/recuperar" className="text-link small-link">Esqueci minha senha</Link>}<button className="button button-dark full-button" disabled={busy}>{busy ? "Aguarde…" : mode === "login" ? "Entrar" : "Criar conta"}<Icon name="arrow"/></button><p className="form-feedback" aria-live="polite">{message}</p></form>{mode === "login" && !canResendConfirmation && <button type="button" className="auth-switch" onClick={() => { setResendEmail(""); setResendMessage(""); setCanResendConfirmation(true); }}>Não recebeu o e-mail de confirmação? Reenviar</button>}{canResendConfirmation && <form onSubmit={resendConfirmation} className="auth-form"><label>Reenviar confirmação<input type="email" autoComplete="email" value={resendEmail} onChange={(event) => setResendEmail(event.target.value)} placeholder="Seu e-mail de cadastro" required/></label><button className="button button-outline full-button" disabled={resendBusy}>{resendBusy ? "Enviando…" : "Enviar novo link"}<Icon name="arrow"/></button><p className="form-feedback" aria-live="polite">{resendMessage}</p></form>}<button className="auth-switch" onClick={() => { setMode(mode === "login" ? "register" : "login"); setMessage(""); }}>{mode === "login" ? "Ainda não tem conta? Cadastre-se" : "Já tem conta? Entrar"}</button><p className="auth-note">{isSupabaseConfigured ? "Sua conta é protegida pela autenticação do Supabase." : "O cadastro ficará disponível depois de configurar as chaves do Supabase."}</p></div></section>;
 }
