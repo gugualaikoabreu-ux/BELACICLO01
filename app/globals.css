@@ -207,7 +207,7 @@ h1, h2, h3 { font-weight: 400; }
 .footer-column a:hover { color: var(--gold); }
 .footer-bottom { grid-column: 1/-1; padding-top: 18px; margin-top: 15px; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.12); color: #858b93; font-size: 8px; letter-spacing: .1em; }
 .contact-float { position: fixed; right: 20px; bottom: 20px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.contact-socials { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+.contact-socials { display: flex; flex-direction: row; align-items: center; gap: 9px; }
 .contact-social-link { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.8); border-radius: 50%; color: white; box-shadow: 0 8px 24px rgba(16,24,39,.2); transition: transform .2s, filter .2s; }
 .contact-social-link:hover { transform: translateY(-2px); filter: brightness(1.06); }
 .contact-social-link svg { width: 22px; height: 22px; }
