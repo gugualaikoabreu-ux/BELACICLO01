@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
 import { Icon } from "@/components/icons";
 import { useStore } from "@/components/store-context";
@@ -14,10 +13,7 @@ export function SiteHeader() {
   return <>
     <header className="site-header">
       <button className="icon-button mobile-menu" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} onClick={() => setMenuOpen(!menuOpen)}><Icon name={menuOpen ? "close" : "menu"}/></button>
-      <Link className="brand-lockup" href="/" aria-label="BelaCiclo — página inicial">
-        <Image className="brand-lockup-image" src="/brand/belaciclo-logo.png" alt="BelaCiclo" width={700} height={172} priority />
-        <small className="brand-lockup-caption">MODA FEMININA · INFANTIL</small>
-      </Link>
+      <Link className="wordmark" href="/" aria-label="BelaCiclo — página inicial"><span>Bela</span><i>Ciclo</i><small>FEMININA · INFANTIL</small></Link>
       <nav className={`main-nav ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
         <Link href="/colecoes" onClick={() => setMenuOpen(false)}>Coleções</Link>
         <Link href="/colecoes?departamento=FEMININA" onClick={() => setMenuOpen(false)}>Feminina</Link>
