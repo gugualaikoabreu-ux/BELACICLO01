@@ -468,6 +468,7 @@ h1, h2, h3 { font-weight: 400; }
 .lookbook-piece-list a { padding: 12px 0; display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); color: var(--navy); font: 400 16px var(--serif); }
 .lookbook-piece-list a span { color: #a7803d; }
 .admin-page { padding-top: 58px; }
+.admin-data-warning { margin: 18px 0; padding: 12px 16px; color: #684e24; border: 1px solid rgba(167,128,61,.32); border-radius: 14px; background: #fff8e9; font-size: 11px; line-height: 1.6; }
 .admin-metrics { margin: 35px 0; display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
 .admin-metrics article { min-height: 130px; padding: 17px; display: flex; flex-direction: column; justify-content: space-between; background: #efebe2; }
 .admin-metrics article > span { color: #756d61; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }

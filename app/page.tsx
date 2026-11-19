@@ -9,6 +9,8 @@ import { storeConfig } from "@/lib/config";
 import { getProductPreparations } from "@/lib/catalog";
 import { createPageMetadata } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = createPageMetadata({
   title: "Moda feminina e infantil",
   description: "Conheça as coleções feminina e infantil da BelaCiclo e encontre peças para acompanhar cada fase da vida.",
