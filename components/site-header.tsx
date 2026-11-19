@@ -27,6 +27,8 @@ export function SiteHeader() {
         <button className="icon-button" aria-label="Pesquisar" onClick={() => setSearchOpen((v) => !v)}><Icon name="search"/></button>
         <Link className="icon-button desktop-action" href="/minha-conta" aria-label="Minha conta"><Icon name="user"/></Link>
         <Link className="icon-button desktop-action with-count" href="/favoritos" aria-label={`Favoritos, ${favorites.length} itens`}><Icon name="heart"/>{favorites.length > 0 && <b>{favorites.length}</b>}</Link>
+        <Link className="icon-button mobile-header-action" href="/minha-conta" aria-label="Entrar ou acessar minha conta"><Icon name="user"/></Link>
+        <Link className="icon-button mobile-header-action with-count" href="/favoritos" aria-label={`Produtos favoritos, ${favorites.length} itens`}><Icon name="heart"/>{favorites.length > 0 && <b>{favorites.length}</b>}</Link>
         <Link className="icon-button with-count" href="/carrinho" aria-label={`Sacola, ${cartCount} itens`}><Icon name="bag"/>{cartCount > 0 && <b>{cartCount}</b>}</Link>
       </div>
     </header>

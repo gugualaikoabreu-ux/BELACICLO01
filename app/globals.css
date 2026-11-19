@@ -38,6 +38,7 @@ h1, h2, h3 { font-weight: 400; }
 .icon-button:hover svg { transform: translateY(-2px); }
 .with-count b { position: absolute; right: -2px; top: 0; min-width: 15px; height: 15px; padding: 0 3px; display: grid; place-items: center; border-radius: 50%; color: var(--cream); background: var(--gold); font: 600 9px var(--sans); }
 .mobile-menu { display: none; }
+.mobile-header-action { display: none; }
 .search-strip { padding: 18px 5.5vw; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--line); background: #f2eee7; animation: slideIn .2s ease-out; }
 .search-strip label { color: var(--muted); white-space: nowrap; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .search-strip input { flex: 1; padding: 8px 0; border: 0; border-bottom: 1px solid #aaa294; outline: 0; background: transparent; }
@@ -568,7 +569,7 @@ h1, h2, h3 { font-weight: 400; }
 @media (max-width: 720px) {
   body { font-size: 13px; }
   .announcement { min-height: 25px; padding: 5px 10px; font-size: 7px; letter-spacing: .13em; }
-  .site-header { height: 67px; padding: 0 17px; grid-template-columns: 36px 1fr 122px; }
+  .site-header { height: 67px; padding: 0 17px; grid-template-columns: 36px minmax(0,1fr) 130px; }
   .mobile-menu { display: inline-grid; justify-self: start; }
   .mobile-menu svg { width: 21px; }
   .wordmark { justify-self: center; font-size: 22px; }
@@ -577,10 +578,11 @@ h1, h2, h3 { font-weight: 400; }
   .main-nav.is-open { padding: 12px 20px 17px; grid-template-rows: 1fr; }
   .main-nav a { min-height: 41px; height: auto; border-bottom: 1px solid rgba(23,23,23,.08); font-size: 9px; }
   .main-nav a::after { display: none; }
-  .header-actions { gap: 5px; }
-  .header-actions .icon-button { width: 29px; height: 33px; }
+  .header-actions { gap: 2px; }
+  .header-actions .icon-button { width: 30px; height: 33px; }
   .header-actions svg { width: 18px; height: 18px; }
   .desktop-action { display: none; }
+  .mobile-header-action { display: inline-grid; }
   .search-strip { padding: 13px 17px; gap: 10px; flex-wrap: wrap; }
   .search-strip label { flex-basis: 100%; font-size: 8px; }
   .search-strip input { font-size: 12px; }
