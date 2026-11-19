@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { isAdminRequest } from "@/lib/admin";
 import { enforceRateLimit, requestIp } from "@/lib/rate-limit";
 import { isSafeHttpsBaseUrl } from "@/lib/media/urls";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -26,10 +27,12 @@ export async function POST(request: Request) {
   const mediaPublicBaseUrl = process.env.MEDIA_PUBLIC_BASE_URL;
   const mediaAccessKey = process.env.MEDIA_ACCESS_KEY;
   const mediaSecretKey = process.env.MEDIA_SECRET_KEY;
-  const remoteStorageConfigured = Boolean(mediaBucketUrl && mediaPublicBaseUrl && mediaAccessKey && mediaSecretKey);
-  const useLocalDevelopmentStorage = process.env.NODE_ENV === "development" && !remoteStorageConfigured;
-  if (!remoteStorageConfigured && !useLocalDevelopmentStorage) {
-    return Response.json({ message: "Configure o armazenamento de imagens antes de enviar fotos." }, { status: 503 });
+  const s3StorageConfigured = Boolean(mediaBucketUrl && mediaPublicBaseUrl && mediaAccessKey && mediaSecretKey);
+  const supabaseStorageConfigured = Boolean(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const useSupabaseStorage = !s3StorageConfigured && supabaseStorageConfigured;
+  const useLocalDevelopmentStorage = process.env.NODE_ENV === "development" && !s3StorageConfigured && !supabaseStorageConfigured;
+  if (!s3StorageConfigured && !supabaseStorageConfigured && !useLocalDevelopmentStorage) {
+    return Response.json({ message: "Configure o armazenamento de imagens da loja antes de enviar fotos." }, { status: 503 });
   }
 
   try {
@@ -49,6 +52,35 @@ export async function POST(request: Request) {
       await mkdir(directory, { recursive: true });
       await writeFile(join(directory, filename), bytes, { flag: "wx" });
       return Response.json({ url: `/products/${filename}` }, { status: 201 });
+    }
+
+    if (useSupabaseStorage) {
+      const bucketName = "product-images";
+      const storage = createSupabaseAdminClient().storage;
+      const bucket = await storage.getBucket(bucketName);
+      if (bucket.error) {
+        const statusCode = "statusCode" in bucket.error ? String(bucket.error.statusCode) : "";
+        const isMissing = statusCode === "404" || /bucket not found/i.test(bucket.error.message);
+        if (!isMissing) return Response.json({ message: "Não foi possível acessar o armazenamento de fotos." }, { status: 503 });
+        const created = await storage.createBucket(bucketName, {
+          public: true,
+          fileSizeLimit: 8 * 1024 * 1024,
+          allowedMimeTypes: [...imageTypes.keys()],
+        });
+        if (created.error && !/already exists/i.test(created.error.message)) {
+          return Response.json({ message: "Não foi possível preparar o armazenamento de fotos." }, { status: 503 });
+        }
+      }
+
+      const key = `products/${randomUUID()}.${type.extension}`;
+      const upload = await storage.from(bucketName).upload(key, bytes, {
+        contentType: file.type,
+        cacheControl: "31536000",
+        upsert: false,
+      });
+      if (upload.error) return Response.json({ message: "O armazenamento não aceitou a foto. Tente enviar novamente." }, { status: 502 });
+      const { data } = storage.from(bucketName).getPublicUrl(key);
+      return Response.json({ url: data.publicUrl, key }, { status: 201 });
     }
 
     const bucketUrl = new URL(mediaBucketUrl!);

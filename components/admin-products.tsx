@@ -48,20 +48,19 @@ export function AdminProducts() {
     };
     try {
       if (imageUrls.length + files.length > 12) { setMessage("Envie no máximo 12 fotos por produto."); return; }
-      let imageUploadWarning = "";
       for (const file of files) {
         const uploadForm = new FormData(); uploadForm.append("file", file);
         try {
           const uploadResponse = await fetch("/api/admin/media", { method: "POST", body: uploadForm });
           const uploadData = await uploadResponse.json();
           if (!uploadResponse.ok) {
-            imageUploadWarning = uploadData.message ?? "Não foi possível enviar as fotos selecionadas.";
-            break;
+            setMessage(uploadData.message ?? "Não foi possível salvar as fotos selecionadas. O produto não foi cadastrado.");
+            return;
           }
           imageUrls.push(uploadData.url as string);
         } catch {
-          imageUploadWarning = "Não foi possível enviar as fotos selecionadas.";
-          break;
+          setMessage("Não foi possível salvar as fotos selecionadas. Confira a conexão e tente novamente; o produto não foi cadastrado.");
+          return;
         }
       }
       payload.images = imageUrls.map((url, position) => ({ url, alt: `${name} — imagem ${position + 1}`, position }));
@@ -70,9 +69,7 @@ export function AdminProducts() {
       if (response.ok) {
         formElement.reset();
         await refresh();
-        setMessage(imageUploadWarning
-          ? `Produto salvo como rascunho, mas as fotos locais não foram enviadas: ${imageUploadWarning} Adicione as fotos depois por URL HTTPS ou configure o armazenamento de imagens.`
-          : data.message ?? "Produto cadastrado.");
+        setMessage(data.message ?? "Produto cadastrado.");
       } else {
         setMessage(data.message ?? "Não foi possível salvar o produto.");
       }

@@ -2,6 +2,9 @@ import { createHash, createHmac } from "node:crypto";
 import { basename, join, resolve } from "node:path";
 import { unlink } from "node:fs/promises";
 import { isSafeHttpsBaseUrl } from "./urls.ts";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+const productImagesBucket = "product-images";
 
 function hmac(key: Buffer | string, value: string) {
   return createHmac("sha256", key).update(value).digest();
@@ -48,6 +51,26 @@ export async function deleteManagedProductImage(imageUrl: string) {
       if (!(error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "ENOENT")) throw error;
     }
     return true;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (supabaseUrl) {
+    try {
+      const projectOrigin = new URL(supabaseUrl).origin;
+      const publicPrefix = `${projectOrigin}/storage/v1/object/public/${productImagesBucket}/`;
+      if (imageUrl.startsWith(publicPrefix)) {
+        const key = imageUrl.slice(publicPrefix.length).split("/").map((segment) => decodeURIComponent(segment)).join("/");
+        if (!/^products\/[0-9a-f-]{36}\.(jpg|png|webp|avif)$/i.test(key) || key.split("/").some((segment) => segment === "." || segment === "..")) {
+          throw new Error("Chave de imagem Supabase inválida.");
+        }
+        const { error } = await createSupabaseAdminClient().storage.from(productImagesBucket).remove([key]);
+        if (error) throw new Error("O armazenamento do Supabase não confirmou a remoção da imagem.");
+        return true;
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("Supabase")) throw error;
+      return false;
+    }
   }
 
   const publicBase = process.env.MEDIA_PUBLIC_BASE_URL?.trim();
