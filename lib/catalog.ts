@@ -4,6 +4,19 @@ import { productPreparations } from "@/lib/product-preparations";
 import { effectiveUnitPrice } from "@/lib/pricing";
 import { publicAvailableVariants } from "@/lib/public-stock";
 
+const CATALOG_RETRY_DELAY_MS = 150;
+const CATALOG_STALE_FALLBACK_MS = 30_000;
+const globalForCatalog = globalThis as typeof globalThis & {
+  belacicloPublicCatalog?: { products: Product[]; loadedAt: number };
+};
+
+function safeCatalogErrorCode(error: unknown) {
+  if (error && typeof error === "object" && "code" in error) {
+    return String((error as { code: unknown }).code).slice(0, 40);
+  }
+  return error instanceof Error ? error.name : "unknown";
+}
+
 function mapProduct(row: {
   id: string; slug: string; name: string; department: "FEMININA" | "INFANTIL"; description: string; category: string; price: number; promotionalPrice: number | null;
   demo: boolean; images: { url: string; alt: string; position: number }[];
@@ -29,20 +42,29 @@ function mapProduct(row: {
 
 export async function getCatalogProducts(): Promise<Product[]> {
   if (!process.env.DATABASE_URL) return [];
-  try {
-    const rows = await getDb().product.findMany({ where: { active: true, demo: false, images: { some: {} }, variants: { some: { active: true, stock: { gt: 0 } } } }, include: { images: true, variants: { where: { active: true } }, related: true }, orderBy: { createdAt: "desc" } });
-    return rows.map(mapProduct).filter((product) => product.price > 0 && product.sizes.length > 0);
-  } catch { return []; }
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const rows = await getDb().product.findMany({ where: { active: true, demo: false, images: { some: {} }, variants: { some: { active: true, stock: { gt: 0 } } } }, include: { images: true, variants: { where: { active: true } }, related: true }, orderBy: { createdAt: "desc" } });
+      const products = rows.map(mapProduct).filter((product) => product.price > 0 && product.sizes.length > 0);
+      globalForCatalog.belacicloPublicCatalog = { products, loadedAt: Date.now() };
+      return products;
+    } catch (error) {
+      if (attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, CATALOG_RETRY_DELAY_MS));
+        continue;
+      }
+
+      console.error("[catalog] Public product query failed after retry", { code: safeCatalogErrorCode(error) });
+      const cached = globalForCatalog.belacicloPublicCatalog;
+      if (cached && Date.now() - cached.loadedAt <= CATALOG_STALE_FALLBACK_MS) return cached.products;
+      return [];
+    }
+  }
+  return [];
 }
 
 export async function getCatalogProduct(slug: string): Promise<Product | undefined> {
-  if (!process.env.DATABASE_URL) return undefined;
-  try {
-    const row = await getDb().product.findFirst({ where: { slug, active: true, demo: false, images: { some: {} }, variants: { some: { active: true, stock: { gt: 0 } } } }, include: { images: true, variants: { where: { active: true } }, related: true } });
-    if (!row) return undefined;
-    const product = mapProduct(row);
-    return product.price > 0 && product.sizes.length > 0 ? product : undefined;
-  } catch { return undefined; }
+  return (await getCatalogProducts()).find((product) => product.slug === slug);
 }
 
 export async function getProductPreparations(): Promise<Product[]> {
