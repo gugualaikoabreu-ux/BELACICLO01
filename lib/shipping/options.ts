@@ -1,6 +1,23 @@
 import { classifyRegionalDestination } from "./regional.ts";
 
-export type ShippingServiceMethod = "regional" | "free_threshold" | "fixed_store_rate" | "correios";
+export type ShippingServiceMethod = "regional" | "free_threshold" | "free_product" | "fixed_store_rate" | "correios";
+
+export const FREE_SHIPPING_PRODUCT_SLUG = "teste";
+
+export function isFreeShippingProductOrder(items: Array<{ productSlug: string }>) {
+  return items.length > 0 && items.every((item) => item.productSlug === FREE_SHIPPING_PRODUCT_SLUG);
+}
+
+export function buildFreeShippingProductOption(settings: Pick<ShippingOptionSettings, "estimatedMinDays" | "estimatedMaxDays">): ShippingOption {
+  return {
+    code: "BELACICLO_PRODUTO_TESTE_FRETE_GRATIS",
+    name: "Frete grátis · Produto teste",
+    method: "free_product",
+    shippingCents: 0,
+    deliveryMinDays: settings.estimatedMinDays,
+    deliveryMaxDays: settings.estimatedMaxDays,
+  };
+}
 
 export type ShippingOption = {
   code: string;

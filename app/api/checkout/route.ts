@@ -17,7 +17,7 @@ import { createStableOrderNumber } from "@/lib/checkout/identifiers";
 import { paymentReservationDurationMinutes } from "@/lib/payments/reservation-duration";
 import { calculateCheckoutTotal } from "@/lib/checkout/totals";
 import { isSameOriginMutationRequest } from "@/lib/security/same-origin";
-import { buildConfiguredShippingOptions, attachCorreiosOptions, selectServerShippingOption, type ShippingOption } from "@/lib/shipping/options";
+import { buildConfiguredShippingOptions, attachCorreiosOptions, buildFreeShippingProductOption, isFreeShippingProductOrder, selectServerShippingOption, type ShippingOption } from "@/lib/shipping/options";
 import { municipalitiesMatch } from "@/lib/shipping/regional";
 import { CepLookupError, lookupViaCep } from "@/lib/address/cep";
 
@@ -99,8 +99,11 @@ export async function POST(request: Request) {
       if (!(error instanceof CepLookupError) || error.kind !== "unavailable") throw new CheckoutRequestError("O CEP não foi encontrado. Confira o endereço antes de finalizar.");
     }
 
-    const shippingOptions = buildConfiguredShippingOptions(storeSettings, destination, quoteSubtotal);
-    if (storeSettings.correiosShippingEnabled && hasCorreiosSettings()) {
+    const freeShippingForProduct = isFreeShippingProductOrder(parsed.data.items.map((item) => ({ productSlug: quoteVariantById.get(item.variantId)!.product.slug })));
+    const shippingOptions = freeShippingForProduct
+      ? [buildFreeShippingProductOption(storeSettings)]
+      : buildConfiguredShippingOptions(storeSettings, destination, quoteSubtotal);
+    if (!freeShippingForProduct && storeSettings.correiosShippingEnabled && hasCorreiosSettings()) {
       try {
         const quotes = await getCorreiosQuotes(parsed.data.address.postalCode, parsed.data.items, storeSettings.originPostalCode);
         shippingOptions.push(...attachCorreiosOptions([], quotes));
@@ -160,6 +163,9 @@ export async function POST(request: Request) {
         const unitPrice = effectiveUnitPrice(variant.product.price, variant.product.promotionalPrice);
         return { variant, quantity: item.quantity, unitPrice, subtotal: unitPrice * item.quantity };
       });
+      if (selectedShipping.method === "free_product" && !isFreeShippingProductOrder(lines.map((line) => ({ productSlug: line.variant.product.slug }))) ) {
+        throw new ShippingUnavailableError("O frete grátis deste produto não se aplica aos itens atuais da sacola. Consulte o frete novamente.");
+      }
       const subtotal = lines.reduce((sum, line) => sum + line.subtotal, 0);
       if (selectedShipping.method === "free_threshold" && (!storeSettings.freeShippingEnabled || storeSettings.freeShippingThresholdCents === null || subtotal < storeSettings.freeShippingThresholdCents)) {
         throw new ShippingUnavailableError("O subtotal mudou e o frete grátis não está mais disponível. Confira os valores da sacola.");

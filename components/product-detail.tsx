@@ -7,9 +7,10 @@ import { ProductArt } from "@/components/product-art";
 import { ProductGrid } from "@/components/product-grid";
 import { WhatsAppProductShare } from "@/components/whatsapp-product-share";
 import { useStore } from "@/components/store-context";
-import { formatCurrency, storeConfig } from "@/lib/config";
+import { formatCurrency } from "@/lib/config";
 import { trackStoreEvent } from "@/lib/analytics-client";
 import type { Product } from "@/lib/products";
+import { FREE_SHIPPING_PRODUCT_SLUG } from "@/lib/shipping/options";
 
 export function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const [size, setSize] = useState(product.variants[0]?.size ?? product.sizes[0] ?? "");
@@ -73,7 +74,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
         <div className="variant-heading"><span>Tamanho</span><small>{selectedVariant?.available ? "Disponível" : "Sem estoque disponível"}</small></div>
         <div className="size-options">{sizesForColor.map((value) => { const available = product.variants.find((variant) => (variant.color ?? "") === color && variant.size === value)?.available ?? false; return <button key={value} className={size === value ? "selected" : ""} onClick={() => setSize(value)} aria-pressed={size === value} disabled={!available}>{value}</button>; })}</div>
         <button className="button button-dark full-button" onClick={addCurrent} disabled={!selectedVariant?.available}>{added ? "Adicionado à sacola" : "Adicionar à sacola"}<Icon name="arrow"/></button>
-        <div className="detail-accordions"><details><summary>Detalhes da peça <Icon name="chevron"/></summary><p>{product.note}. Composição, origem e cuidados serão exibidos quando cadastrados pela BelaCiclo.</p></details><details><summary>Entrega e devoluções <Icon name="chevron"/></summary><p>Consulte o CEP no checkout para ver as opções disponíveis. O prazo só aparece quando informado pelos Correios. As regras de devolução estão na página de trocas.</p></details></div>
+        <div className="detail-accordions"><details><summary>Detalhes da peça <Icon name="chevron"/></summary><p>{product.note}. Composição, origem e cuidados serão exibidos quando cadastrados pela BelaCiclo.</p></details><details><summary>Entrega e devoluções <Icon name="chevron"/></summary><p>{product.slug === FREE_SHIPPING_PRODUCT_SLUG ? "Frete grátis para esta peça quando comprada sozinha. Se adicionar outros produtos à sacola, o checkout calculará o frete normalmente." : "Consulte o CEP no checkout para ver as opções disponíveis."} O prazo só aparece quando informado pelos Correios. As regras de devolução estão na página de trocas.</p></details></div>
         <WhatsAppProductShare productName={product.name} productPrice={formatCurrency(product.price)} productSlug={product.slug} imageUrl={photos[imageIndex]?.url ?? product.imageUrl}/>
       </div>
     </section>

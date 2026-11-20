@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { effectiveUnitPrice } from "@/lib/pricing";
 import { getStoreShippingSettings } from "@/lib/shipping/store-settings";
 import { isSameOriginMutationRequest } from "@/lib/security/same-origin";
-import { buildConfiguredShippingOptions, attachCorreiosOptions } from "@/lib/shipping/options";
+import { buildConfiguredShippingOptions, attachCorreiosOptions, buildFreeShippingProductOption, isFreeShippingProductOrder } from "@/lib/shipping/options";
 import { CepLookupError, lookupViaCep } from "@/lib/address/cep";
 
 const requestSchema = z.object({
@@ -44,9 +44,12 @@ export async function POST(request: Request) {
       lookupUnavailable = true;
     }
 
-    const options = buildConfiguredShippingOptions(settings, destination, subtotal);
+    const freeShippingForProduct = isFreeShippingProductOrder(parsed.data.items.map((item) => ({ productSlug: byId.get(item.variantId)!.product.slug })));
+    const options = freeShippingForProduct
+      ? [buildFreeShippingProductOption(settings)]
+      : buildConfiguredShippingOptions(settings, destination, subtotal);
     let correiosUnavailable = false;
-    if (settings.correiosShippingEnabled && hasCorreiosSettings()) {
+    if (!freeShippingForProduct && settings.correiosShippingEnabled && hasCorreiosSettings()) {
       try {
         const services = await getCorreiosQuotes(postalCode, parsed.data.items, settings.originPostalCode);
         options.push(...attachCorreiosOptions([], services));
