@@ -35,7 +35,11 @@ export async function GET(request: Request) {
   try {
     const products = await getDb().product.findMany({ orderBy: { updatedAt: "desc" }, include: { variants: { include: { movements: { orderBy: { createdAt: "desc" }, take: 5 } } }, images: { orderBy: { position: "asc" } }, related: true } });
     return Response.json({ products });
-  } catch { return Response.json({ message: "Não foi possível consultar os produtos." }, { status: 503 }); }
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? String((error as { code: unknown }).code).slice(0, 40) : error instanceof Error ? error.name : "unknown";
+    console.error("[admin products] Product and stock query failed", { code });
+    return Response.json({ message: "Não foi possível consultar os produtos." }, { status: 503 });
+  }
 }
 
 export async function POST(request: Request) {

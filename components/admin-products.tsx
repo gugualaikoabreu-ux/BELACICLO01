@@ -10,6 +10,8 @@ type ProductRow = { id: string; slug: string; name: string; description: string;
 export function AdminProducts() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [message, setMessage] = useState("");
+  const [catalogError, setCatalogError] = useState("");
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [busy, setBusy] = useState(false);
   const [productFeedback, setProductFeedback] = useState<Record<string, string>>({});
   const [pendingProductId, setPendingProductId] = useState<string | null>(null);
@@ -17,12 +19,26 @@ export function AdminProducts() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   async function refresh() {
-    try {
-      const response = await fetch("/api/admin/products");
-      const data = await response.json();
-      if (response.ok) setProducts(data.products);
-      else setMessage(data.message ?? "Não foi possível carregar o catálogo.");
-    } catch { setMessage("Não foi possível carregar o catálogo."); }
+    setLoadingProducts(true);
+    let lastError = "Não foi possível consultar produtos e estoque. Tente novamente.";
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetch("/api/admin/products", { cache: "no-store" });
+        const data = await response.json();
+        if (response.ok && Array.isArray(data.products)) {
+          setProducts(data.products);
+          setCatalogError("");
+          setLoadingProducts(false);
+          return;
+        }
+        lastError = data.message ?? lastError;
+      } catch {
+        lastError = "A conexão com o catálogo falhou. Os dados existentes não foram alterados.";
+      }
+      if (attempt < 2) await new Promise((resolve) => window.setTimeout(resolve, 300 * (attempt + 1)));
+    }
+    setCatalogError(lastError);
+    setLoadingProducts(false);
   }
   useEffect(() => { const timer = window.setTimeout(() => { void refresh(); }, 0); return () => window.clearTimeout(timer); }, []);
 
@@ -192,6 +208,7 @@ export function AdminProducts() {
     </form>
     <p className="form-feedback" aria-live="polite">{message}</p>
     <h2>Catálogo e estoque</h2>
+    {catalogError && <p className="admin-data-warning" role="alert">{catalogError} {products.length > 0 ? "A lista abaixo mostra os últimos dados carregados." : "Nenhum produto foi removido. Recarregue a lista para consultar o banco novamente."} <button type="button" className="text-link" onClick={() => void refresh()}>Tentar novamente</button></p>}
     <div className="admin-table">{products.map((product) => <article className="admin-product" key={product.id}>
       <div className="admin-row">
         <div><b>{product.name}</b><span>{product.slug} · {product.department === "INFANTIL" ? "Infantil" : "Feminina"} · {product.category} · {product.variants.reduce((sum, variant) => sum + Math.max(0, variant.stock - variant.reserved), 0)} un. disponíveis</span></div>
@@ -231,6 +248,6 @@ export function AdminProducts() {
         <section className="admin-images"><h3>Fotos oficiais ({product.images.length})</h3>{product.images.map((image) => <div className="admin-image-row" key={image.id}><div><a href={image.url} target="_blank" rel="noreferrer">Abrir foto oficial</a><span>{image.alt}</span></div><button type="button" onClick={() => request(`/api/admin/products/${product.id}/images/${image.id}`, "DELETE")}>Remover</button></div>)}
           <form className="admin-add-image" onSubmit={(event) => void addImages(event, product)}><label>URLs oficiais HTTPS<input name="url" placeholder="https://... (separe por vírgula)"/></label><label>Ou envie fotos JPEG, PNG, WebP ou AVIF<input name="files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple/></label><label>Texto alternativo<input name="alt" maxLength={250} placeholder="Ex.: blazer em fundo claro"/></label><button className="button button-outline" disabled={busy}>Adicionar fotos</button></form>
         </section></details>
-    </article>)}{products.length === 0 && <p className="empty-note">Nenhum produto cadastrado no banco de dados.</p>}</div>
+    </article>)}{loadingProducts && products.length === 0 && <p className="empty-note" role="status">Carregando produtos e estoque…</p>}{!loadingProducts && !catalogError && products.length === 0 && <p className="empty-note">Nenhum produto cadastrado no banco de dados.</p>}</div>
   </div>;
 }
