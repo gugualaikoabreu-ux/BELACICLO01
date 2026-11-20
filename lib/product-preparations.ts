@@ -1,6 +1,6 @@
 import type { Product } from "@/lib/products";
 
-/** Officially defined products shown as drafts until photos and stock are confirmed. */
+/** Products shown as drafts until their official price, photo, and stock are confirmed. */
 export const productPreparations: Product[] = [
   {
     id: "preparation-calca-alfaiataria",
@@ -35,5 +35,25 @@ export const productPreparations: Product[] = [
     related: [],
     isDemo: false,
     isPreparation: true,
+  },
+  {
+    id: "preparation-jaqueta-jeans-preta",
+    slug: "jaqueta-jeans-preta",
+    name: "Jaqueta Jeans Preta",
+    department: "FEMININA",
+    category: "Jaquetas",
+    price: 0,
+    regularPrice: 0,
+    color: "#171717",
+    colorName: "Preto",
+    note: "Preço, tamanhos e estoque aguardam confirmação da loja.",
+    sizes: [],
+    variants: [],
+    related: [],
+    isDemo: false,
+    isPreparation: true,
+    imageUrl: "/products/jaqueta-jeans-preta.jpeg",
+    imageAlt: "Jaqueta jeans preta dobrada sobre fundo claro",
+    images: [{ url: "/products/jaqueta-jeans-preta.jpeg", alt: "Jaqueta jeans preta dobrada sobre fundo claro" }],
   },
 ];
