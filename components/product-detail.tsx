@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icons";
 import { ProductArt } from "@/components/product-art";
 import { ProductGrid } from "@/components/product-grid";
+import { WhatsAppProductShare } from "@/components/whatsapp-product-share";
 import { useStore } from "@/components/store-context";
 import { formatCurrency, storeConfig } from "@/lib/config";
 import { trackStoreEvent } from "@/lib/analytics-client";
@@ -73,7 +74,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
         <div className="size-options">{sizesForColor.map((value) => { const available = product.variants.find((variant) => (variant.color ?? "") === color && variant.size === value)?.available ?? false; return <button key={value} className={size === value ? "selected" : ""} onClick={() => setSize(value)} aria-pressed={size === value} disabled={!available}>{value}</button>; })}</div>
         <button className="button button-dark full-button" onClick={addCurrent} disabled={!selectedVariant?.available}>{added ? "Adicionado à sacola" : "Adicionar à sacola"}<Icon name="arrow"/></button>
         <div className="detail-accordions"><details><summary>Detalhes da peça <Icon name="chevron"/></summary><p>{product.note}. Composição, origem e cuidados serão exibidos quando cadastrados pela BelaCiclo.</p></details><details><summary>Entrega e devoluções <Icon name="chevron"/></summary><p>Consulte o CEP no checkout para ver as opções disponíveis. O prazo só aparece quando informado pelos Correios. As regras de devolução estão na página de trocas.</p></details></div>
-        <a className="whatsapp-product" href={`mailto:${storeConfig.email}?subject=${encodeURIComponent(`Dúvida sobre ${product.name}`)}`}><Icon name="mail"/> Perguntar sobre esta peça</a>
+        <WhatsAppProductShare productName={product.name} productPrice={formatCurrency(product.price)} productSlug={product.slug} imageUrl={photos[imageIndex]?.url ?? product.imageUrl}/>
       </div>
     </section>
     {related.length > 0 && <section className="related-section section-wrap"><div className="section-heading"><div><span className="eyebrow">IDEIAS PARA COMBINAR</span><h2>Complete o <em>seu look.</em></h2></div></div><ProductGrid items={related}/></section>}

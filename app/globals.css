@@ -281,8 +281,13 @@ h1, h2, h3 { font-weight: 400; }
 .detail-accordions summary svg { width: 16px; transition: transform .2s; }
 .detail-accordions details[open] summary svg { transform: rotate(180deg); }
 .detail-accordions details p { margin: 0 0 15px; color: #76716a; font-size: 10px; line-height: 1.8; }
-.whatsapp-product { margin-top: 21px; display: inline-flex; align-items: center; gap: 8px; color: #39715b; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
-.whatsapp-product svg { width: 19px; }
+.product-contact-actions { margin-top: 21px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.whatsapp-product { min-height: 40px; padding: 0 14px; display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(37,211,102,.28); border-radius: 999px; color: #14583a; background: linear-gradient(135deg, rgba(255,255,255,.88), rgba(225,247,235,.72)); box-shadow: 0 7px 20px rgba(16,24,39,.07), inset 0 1px 0 rgba(255,255,255,.95); font-size: 9px; font-weight: 650; text-transform: uppercase; letter-spacing: .07em; transition: transform .2s ease, box-shadow .2s ease; cursor: pointer; }
+.whatsapp-product:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(16,24,39,.11), inset 0 1px 0 #fff; }
+.whatsapp-product svg { width: 20px; height: 20px; }
+.whatsapp-product-share:disabled { cursor: wait; opacity: .72; }
+.whatsapp-product-email { min-height: 30px; padding: 0; border: 0; border-radius: 0; color: #39715b; background: transparent; box-shadow: none; font-weight: 500; }
+.whatsapp-product-email:hover { transform: none; box-shadow: none; text-decoration: underline; text-underline-offset: 4px; }
 .related-section { padding-top: 82px; }
 .related-section .product-grid { margin-top: 34px; }
 .related-section .section-heading { margin-bottom: 25px; }
