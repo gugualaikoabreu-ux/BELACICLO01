@@ -746,7 +746,7 @@ h1, h2, h3 { font-weight: 400; }
 html, body { background: #f5f5f7; color: #1d1d1f; }
 body { font-family: var(--sans); }
 .announcement { position: relative; z-index: 40; color: rgba(255,255,255,.88); background: #1d1d1f; }
-.site-header { position: sticky; top: 10px; width: min(calc(100% - 56px), 1360px); height: 72px; margin: 10px auto 0; padding: 0 28px; border: 1px solid rgba(255,255,255,.7); border-radius: 24px; background: rgba(255,255,255,.76); box-shadow: 0 12px 38px rgba(29,29,31,.1), inset 0 1px rgba(255,255,255,.9); backdrop-filter: blur(28px) saturate(1.7); -webkit-backdrop-filter: blur(28px) saturate(1.7); }
+.site-header { position: sticky; top: 10px; width: min(calc(100% - 56px), 1360px); height: 72px; margin: 10px auto 0; padding: 0 28px; border: 1px solid rgba(255,255,255,.7); border-radius: 24px; background: rgba(255,255,255,.95); box-shadow: 0 12px 38px rgba(29,29,31,.1), inset 0 1px rgba(255,255,255,.9); backdrop-filter: blur(28px) saturate(1.7); -webkit-backdrop-filter: blur(28px) saturate(1.7); }
 .wordmark { color: #1d1d1f; }
 .wordmark small { color: #6e6e73; }
 .main-nav a { color: #424245; }
