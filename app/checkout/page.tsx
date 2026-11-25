@@ -11,7 +11,7 @@ import { formatCurrency } from "@/lib/config";
 import { CheckoutAddressFields } from "@/components/checkout-address-fields";
 import { isValidCep, normalizeCep } from "@/lib/address/cep";
 
-type CheckoutPayment = { orderNumber: string; subtotal: number; discount: number; shipping: number; shippingServiceName: string | null; shippingDeliveryMinDays: number | null; shippingDeliveryMaxDays: number | null; total: number; paymentStatus: string; copyPaste: string; recipientName: string; qrCodeDataUrl: string; expiresAt: string };
+type CheckoutPayment = { orderNumber: string; subtotal: number; discount: number; shipping: number; shippingServiceName: string | null; shippingDeliveryMinDays: number | null; shippingDeliveryMaxDays: number | null; total: number; paymentStatus: string; copyPaste: string; recipientKey: string; recipientName: string; qrCodeDataUrl: string; expiresAt: string };
 type ShippingOption = { code: string; name: string; method: "regional" | "free_threshold" | "free_product" | "fixed_store_rate" | "correios"; shippingCents: number; deliveryMinDays: number | null; deliveryMaxDays: number | null };
 type ShippingQuote = { shippingCents?: number; postalCode: string; method: string; message: string; services?: ShippingOption[]; cartSignature?: string };
 type CouponQuote = { code: string; subtotalCents: number; discountCents: number; discountedSubtotalCents: number; cartSignature: string };

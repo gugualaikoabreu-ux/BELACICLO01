@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PixPayment } from "@/components/pix-payment";
 import { PaymentGuides } from "@/components/payment-guides";
 import { getDb } from "@/lib/db";
-import { getManualPixRecipientName, renderPixQrCodeDataUrl } from "@/lib/payments/service";
+import { getManualPixRecipientKey, getManualPixRecipientName, renderPixQrCodeDataUrl } from "@/lib/payments/service";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { createPageMetadata } from "@/lib/seo";
 import { formatCurrency, storeConfig } from "@/lib/config";
@@ -106,6 +106,7 @@ export default async function TrackOrderPage({ params }: { params: Promise<{ num
           orderNumber={order.number}
           total={pendingPayment.amount}
           copyPaste={pendingPayment.pixCopyPaste}
+          recipientKey={getManualPixRecipientKey()}
           recipientName={getManualPixRecipientName()}
           qrCodeDataUrl={qrCodeDataUrl}
           expiresAt={pendingPayment.expiresAt}

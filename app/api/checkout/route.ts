@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createPixPayment, getManualPixRecipientName, renderPixQrCodeDataUrl } from "@/lib/payments/service";
+import { createPixPayment, getManualPixRecipientKey, getManualPixRecipientName, renderPixQrCodeDataUrl } from "@/lib/payments/service";
 import { createPaymentRecord } from "@/lib/payments/repository";
 import { PaymentUnavailableError } from "@/lib/payments/provider";
 import { ShippingUnavailableError } from "@/lib/shipping/manual";
@@ -267,7 +267,7 @@ export async function POST(request: Request) {
     }
 
     checkoutStage = "build_checkout_response";
-    return Response.json({ orderNumber: result.order.number, subtotal: result.order.subtotal, discount: result.order.discount, shipping: result.order.shipping, shippingServiceName: result.order.shippingServiceName, shippingDeliveryMinDays: result.shippingDeliveryMinDays, shippingDeliveryMaxDays: result.shippingDeliveryMaxDays, total: result.payment.amount, paymentStatus: result.payment.paymentStatus, copyPaste: result.payment.pixCopyPaste, recipientName: result.pixRecipientName, qrCodeDataUrl: result.qrCodeDataUrl, expiresAt: result.payment.expiresAt }, { status: 201 });
+    return Response.json({ orderNumber: result.order.number, subtotal: result.order.subtotal, discount: result.order.discount, shipping: result.order.shipping, shippingServiceName: result.order.shippingServiceName, shippingDeliveryMinDays: result.shippingDeliveryMinDays, shippingDeliveryMaxDays: result.shippingDeliveryMaxDays, total: result.payment.amount, paymentStatus: result.payment.paymentStatus, copyPaste: result.payment.pixCopyPaste, recipientKey: getManualPixRecipientKey(), recipientName: result.pixRecipientName, qrCodeDataUrl: result.qrCodeDataUrl, expiresAt: result.payment.expiresAt }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("[checkout] Pedido não criado", {
       stage: checkoutStage,
